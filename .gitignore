@@ -106,3 +106,8 @@ venv.bak/
 
 test.py
 test2.py
+.idea/innotree.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/workspace.xml
+spider.py
