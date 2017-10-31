@@ -4,6 +4,7 @@
 # first edit : 2017-10-26
 
 import requests
+import time
 import re
 import urllib
 import urllib3
@@ -51,7 +52,7 @@ htmls = []
 
 # 解析--页面
 def get_parse(html):
-    # proxies = get_proxy()
+    proxies = get_proxy()
     # req = requests.get(html, headers=head, proxies=proxies, verify=False)
     req = requests.get(html, headers=head, verify=False)
     return req.text
@@ -65,11 +66,11 @@ def get_first_page_lists():
     #         '宁夏回族自治区新疆维吾尔自治']
     # rounds = ['1-2', '3-4-5-6-7-8', '9-10-11-12-13-14', '15-16-17-18-19', '20-21', '30', '40', '50', '60']
     area = ['北京市']
-    rounds = ['60']
+    rounds = ['15-16-17-18-19','60']
 
     for areaName in area:
         for x in rounds:
-            url = 'https://www.innotree.cn/inno/search/ajax/getCompanySearchResultV2?query=&areaName=' + urllib.quote(
+            url = 'https://www.innotree.cn/inno/search/ajax/getInstitutionSearchResultV2?query=&areaName=' + urllib.quote(
                 areaName) + '&rounds=' + str(x) + '&st=1'
             first_page_lists.append(url)
     return first_page_lists
@@ -77,11 +78,11 @@ def get_first_page_lists():
 
 # 获取--该维度下信息数量 返回页面数
 def get_page_num(html):
-    company_count = re_findall('"count":(.*?),', html)[0]
-    if int(company_count) % 10 == 0:
-        count = int(company_count) / 10
+    insti_count = re_findall('"count":(.*?),', html)[0]
+    if int(insti_count) % 10 == 0:
+        count = int(insti_count) / 10
     else:
-        count = int(company_count) / 10 + 1
+        count = int(insti_count) / 10 + 1
     return count
 
 
@@ -90,34 +91,10 @@ def get_all_page(count, page):
     all_page_list = []
 
     for i in range(1, count + 1):
-        real_url = page[:-1] + str(i) + '&ps=10&sEdate=-1&sFdate=1&sRound=-1&chainName='
+        real_url = page[:-1] + str(i) + '&ps=10&sInum=1&sEnum=-1&sEdate=-1'
         all_page_list.append(real_url)
     print all_page_list
     return all_page_list
-
-
-# 解析--列表页信息
-def parse_first_page(html):
-    logo = re_findall('"logo":"(.*?)"', html)[0]
-    print logo
-    product_name = re_findall('"alias":"(.*?)",', html)[0]
-    print product_name
-    cid = re_findall('"ncid":"(.*?)",', html)[0]
-    print cid
-    last_time_of_financing = re_findall('"idate":"(.*?)",', html)[0]
-    print last_time_of_financing
-    address = re_findall('"address":"(.*?)",', html)[0]
-    print address
-    edate = re_findall('"edate":"(.*?)",', html)[0]
-    print edate
-    round = re_findall('"round":(.*?)},', html)[0]
-    print round
-    amount = re_findall('"amount":"(.*?)",', html)[0]
-    print amount
-    investor = re_findall('"instName":"(.*?)",', html)[0]
-    print investor
-    company_count = re_findall('"count":(.*?),', html)[0]
-    print company_count
 
 
 def get_every_page():
@@ -140,47 +117,52 @@ def get_html():
 
 
 def main(html):
+    conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
+    cursor = conn.cursor()
+
+    time.sleep(1)
     print 'test: ' + html
     content = get_parse(html)
     j_content = json.loads(content)
-    data = j_content['data']['company']['infos']
+    data = j_content['data']['inst']['infos']
     for index in data:
-        # 最近融资时间
-        idate = index['idate']
-        # 公司
+        # 组织名
         name = index['name']
-        # 公司logo
+        # 组织logo
         logo = index['logo']
-        # 公司url
-        company_url = 'https://www.innotree.cn/inno/company/' + index['ncid'] + '.html'
-        # 产品名
+        # id
+        insts_id = index['instid']
+        # 组织url
+        insts_url = 'https://www.innotree.cn/inno/institution/detail/' + index['instid'] + '.html'
+        # 机构简称
         alias = index['alias']
-        # 地址
-        address = index['address']
-        # 轮次
-        round = index['round']
+        # 投资笔数
+        investCount = index['investCount']
+        # 退出笔数
+        exitCount = index['exitCount']
+        # 投资类型
+        investType = index['investType']
         # 成立时间
-        edate = index['edate']
-        # 融资金额
-        amount = index['amount']
-        # 投资方
-        instsName = index['insts'][0]['instName']
+        creatDate = index['creatDate']
+        # 管理基金
+        mainFundName = index['mainFundName']
 
         print name
 
         # print idate, name, logo, company_url, alias, address, round, edate, amount, instsName
         cursor.execute(
-            'insert into innotree_company_baseInfo values ("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % (
-                idate,
+            'insert into innotree_insts_baseInfo values ("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % (
+
                 name,
                 logo,
-                company_url,
+                insts_id,
                 alias,
-                address,
-                round,
-                edate,
-                amount,
-                instsName,
+                insts_url,
+                investCount,
+                exitCount,
+                investType,
+                creatDate,
+                mainFundName,
                 str(datetime.datetime.now()),
                 str(datetime.datetime.now())[:10]
             ))
@@ -191,7 +173,10 @@ if __name__ == '__main__':
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
     cursor = conn.cursor()
 
-    cursor.execute('truncate table innotree_company_baseInfo')
+    cursor.execute('truncate table innotree_insts_baseInfo')
+    conn.commit()
+    cursor.close()
+    conn.close()
     # <-------单线程--------
 
     # htmls = get_html()
@@ -201,14 +186,14 @@ if __name__ == '__main__':
     # -------单线程-------->
 
     # <-------多线程--------
-    thread_num = 5
+    thread_num = 3
     start_no = 0
 
     htmls = get_html()
     print  len(htmls)
     while start_no < (len(htmls) - thread_num):
         threads = []
-        for inner_index in range(0, thread_num):
+        for inner_index in range(0, thread_num+1):
             threads.append(
                 threading.Thread(target=main, args=(htmls[start_no + inner_index],))
             )
@@ -219,12 +204,6 @@ if __name__ == '__main__':
         start_no += thread_num
     print 'end'
     # -------多线程-------->
-
-
-
-
-
     print '**************插入ok------------------------'
-
-    cursor.close()
-    conn.close()
+    # cursor.close()
+    # conn.close()
