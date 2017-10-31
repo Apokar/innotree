@@ -52,7 +52,7 @@ htmls = []
 
 # 解析--页面
 def get_parse(html):
-    proxies = get_proxy()
+    # proxies = get_proxy()
     # req = requests.get(html, headers=head, proxies=proxies, verify=False)
     req = requests.get(html, headers=head, verify=False)
     return req.text
@@ -66,7 +66,7 @@ def get_first_page_lists():
     #         '宁夏回族自治区新疆维吾尔自治']
     # rounds = ['1-2', '3-4-5-6-7-8', '9-10-11-12-13-14', '15-16-17-18-19', '20-21', '30', '40', '50', '60']
     area = ['北京市']
-    rounds = ['15-16-17-18-19','60']
+    rounds = ['60']
 
     for areaName in area:
         for x in rounds:
@@ -146,6 +146,7 @@ def main(html):
 
     time.sleep(1)
     print 'test: ' + html
+
     content = get_parse(html)
     j_content = json.loads(content)
     data = j_content['data']['company']['infos']
@@ -214,17 +215,44 @@ if __name__ == '__main__':
 
     htmls = get_html()
     print  len(htmls)
-    while start_no < (len(htmls) - thread_num):
+    while True:
         threads = []
-        for inner_index in range(0, thread_num+1):
-            threads.append(
-                threading.Thread(target=main, args=(htmls[start_no + inner_index],))
-            )
+        if start_no <= (len(htmls) - thread_num):
+            for inner_index in range(0, thread_num):
+                print start_no + inner_index
+
+                threads.append(
+
+                    threading.Thread(target=main, args=(htmls[min(start_no + inner_index, len(htmls) - 1)],))
+                )
+        else:
+            if (start_no + inner_index) == (len(htmls)-1):
+                break
+            else:
+                time.sleep(2)
+                print '1----------1------------1'
+                if (len(htmls) - thread_num) < start_no < 2 * (len(htmls) - thread_num):
+                    print '2----------2------------2'
+
+                    for inner_index in range(0, len(htmls) - start_no):
+                        print '3----------3------------3'
+                        print start_no + inner_index
+
+
+                        threads.append(
+                            threading.Thread(target=main, args=(htmls[start_no + inner_index],))
+                        )
+
         for t in threads:
             t.setDaemon(True)
             t.start()
         t.join()
+        if (start_no + inner_index) == (len(htmls) - 1):
+            print '!@#@!#@#!@#@!#!@#!@#!@#!@#!@!@#'
+            break
         start_no += thread_num
+
+
     print 'end'
     # -------多线程-------->
 
@@ -232,7 +260,7 @@ if __name__ == '__main__':
 
 
 
-    print '**************插入ok------------------------'
+    print '**************插入ok***************'
     time.sleep(1)
     # cursor.close()
     # conn.close()
