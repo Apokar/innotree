@@ -70,9 +70,11 @@ def get_first_page_lists():
     # area = ['北京市', '天津市', '上海市', '重庆市', '河北省', '山西省', '内蒙古自治区辽宁省', '吉林省', '黑龙江省', '江苏省', '浙江省', '安徽省', '福建省', '江西省',
     #         '山东省', '河南省', '湖北省', '湖南省', '广东省', '广西壮族自治区海南省', '四川省', '贵州省', '云南省', '西藏自治区陕西省', '甘肃省', '青海省',
     #         '宁夏回族自治区新疆维吾尔自治']
-    # rounds = ['1-2', '3-4-5-6-7-8', '9-10-11-12-13-14', '15-16-17-18-19', '20-21', '30', '40', '50', '60']
+
+
     area = ['北京市']
-    rounds = ['60']
+
+    rounds = ['1-2', '3-4-5-6-7-8', '9-10-11-12-13-14', '15-16-17-18-19', '20-21', '30', '40', '50', '60']
 
     for areaName in area:
         for x in rounds:
@@ -85,17 +87,20 @@ def get_first_page_lists():
 # 获取--该维度下信息数量 返回页面数
 def get_page_num(html):
     insti_count = re_findall('"count":(.*?),', html)[0]
-    if int(insti_count) % 10 == 0:
-        count = int(insti_count) / 10
+    if insti_count != 0:
+        if int(insti_count) % 10 == 0:
+            count = int(insti_count) / 10
+        else:
+            count = int(insti_count) / 10 + 1
+        return count
     else:
-        count = int(insti_count) / 10 + 1
-    return count
+        count = 1
+        return count
 
 
 # 获取--各个维度下的所有页面
 def get_all_page(count, page):
     all_page_list = []
-
     for i in range(1, count + 1):
         real_url = page[:-1] + str(i) + '&ps=10&sInum=1&sEnum=-1&sEdate=-1'
         all_page_list.append(real_url)
@@ -106,7 +111,6 @@ def get_all_page(count, page):
 def get_every_page():
     every_page = []
     first_page_lists = get_first_page_lists()
-    # print first_page_lists
     for page in first_page_lists:
         html = get_parse(page)
         count = get_page_num(html)
@@ -116,73 +120,88 @@ def get_every_page():
 
 
 def get_html():
+    existed_htmls = []
     every_page = get_every_page()
+    cursor.execute('select htmls from innotree_insts_baseInfo ')
+    data = cursor.fetchall()
+
+    for x in range(len(data)):
+        existed_htmls.append(data[x][0])
+
     for html in every_page:
-        htmls.append(html)
+        if html not in existed_htmls:
+            htmls.append(html)
     return htmls
 
 
 def main(html):
-    conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
-    cursor = conn.cursor()
+    while True:
+        try:
+            conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
+            cursor = conn.cursor()
 
-    time.sleep(1)
-    print 'test: ' + html
-    content = get_parse(html)
-    j_content = json.loads(content)
-    data = j_content['data']['inst']['infos']
-    for index in data:
-        # 组织名
-        name = index['name']
-        # 组织logo
-        logo = index['logo']
-        # id
-        insts_id = index['instid']
-        # 组织url
-        insts_url = 'https://www.innotree.cn/inno/institution/detail/' + index['instid'] + '.html'
-        # 机构简称
-        alias = index['alias']
-        # 投资笔数
-        investCount = index['investCount']
-        # 退出笔数
-        exitCount = index['exitCount']
-        # 投资类型
-        investType = index['investType']
-        # 成立时间
-        creatDate = index['creatDate']
-        # 管理基金
-        mainFundName = index['mainFundName']
+            time.sleep(1)
+            print 'getting: ' + html
 
-        print name
+            content = get_parse(html)
+            j_content = json.loads(content)
+            data = j_content['data']['inst']['infos']
+            for index in data:
+                # 组织名
+                name = index['name']
+                # 组织logo
+                logo = index['logo']
+                # id
+                insts_id = index['instid']
+                # 组织url
+                insts_url = 'https://www.innotree.cn/inno/institution/detail/' + index['instid'] + '.html'
+                # 机构简称
+                alias = index['alias']
+                # 投资笔数
+                investCount = index['investCount']
+                # 退出笔数
+                exitCount = index['exitCount']
+                # 投资类型
+                investType = index['investType']
+                # 成立时间
+                creatDate = index['creatDate']
+                # 管理基金
+                mainFundName = index['mainFundName']
 
-        # print idate, name, logo, company_url, alias, address, round, edate, amount, instsName
-        cursor.execute(
-            'insert into innotree_insts_baseInfo values ("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % (
+                print name
 
-                name,
-                logo,
-                insts_id,
-                alias,
-                insts_url,
-                investCount,
-                exitCount,
-                investType,
-                creatDate,
-                mainFundName,
-                str(datetime.datetime.now()),
-                str(datetime.datetime.now())[:10]
-            ))
-    conn.commit()
+                # print idate, name, logo, company_url, alias, address, round, edate, amount, instsName
+                cursor.execute(
+                    'insert into innotree_insts_baseInfo values ("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % (
+                        html,
+                        name,
+                        logo,
+                        insts_id,
+                        alias,
+                        insts_url,
+                        investCount,
+                        exitCount,
+                        investType,
+                        creatDate,
+                        mainFundName,
+                        str(datetime.datetime.now()),
+                        str(datetime.datetime.now())[:10]
+                    ))
+            conn.commit()
+            break
+        except Exception, e:
+            print str(e)
+            continue
 
 
 if __name__ == '__main__':
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
     cursor = conn.cursor()
 
-    cursor.execute('truncate table innotree_insts_baseInfo')
-    conn.commit()
-    cursor.close()
-    conn.close()
+    # cursor.execute('truncate table innotree_insts_baseInfo')
+    # conn.commit()
+    # cursor.close()
+    # conn.close()
     # <-------单线程--------
 
     # htmls = get_html()
@@ -196,7 +215,9 @@ if __name__ == '__main__':
     start_no = 0
 
     htmls = get_html()
-    print  len(htmls)
+    print  'len(htmls):  ' + str(len(htmls))
+    inner_index = -2
+
     while True:
         threads = []
         if start_no <= (len(htmls) - thread_num):
@@ -205,16 +226,15 @@ if __name__ == '__main__':
 
                 threads.append(
 
-                    threading.Thread(target=main, args=(htmls[min(start_no + inner_index, len(htmls) - 1)],))
+                    threading.Thread(target=main, args=(htmls[start_no + inner_index],))
                 )
         else:
             if (start_no + inner_index) == (len(htmls) - 1):
                 break
             else:
-                time.sleep(2)
-                if (len(htmls) - thread_num) < start_no < 2 * (len(htmls) - thread_num):
+                if (len(htmls) - thread_num) < start_no < 2 * abs(len(htmls) - thread_num):
                     for inner_index in range(0, len(htmls) - start_no):
-                        print start_no + inner_index
+                        print inner_index
                         threads.append(
                             threading.Thread(target=main, args=(htmls[start_no + inner_index],))
                         )
@@ -223,7 +243,7 @@ if __name__ == '__main__':
             t.start()
         t.join()
         if (start_no + inner_index) == (len(htmls) - 1):
-            print '循环结束'
+            print u'----------循环结束------------'
             break
         start_no += thread_num
     print 'end'
