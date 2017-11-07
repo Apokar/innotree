@@ -92,7 +92,7 @@ def get_html_from_db():
     old_urls = []
     corp_urls = []
     real_urls = []
-    cursor.execute('select url from innotree_company_detailInfo')
+    cursor.execute('select url from innotree_company_rongziInfo')
     old = cursor.fetchall()
 
     for y in range(0, len(old)):
@@ -110,55 +110,6 @@ def get_html_from_db():
     return real_urls
 
 
-def parse_htmls(html):
-    while True:
-        try:
-            # print html
-            com_name = re.findall('<span>公司中文名:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
-            print com_name
-
-            com_capital = \
-            re.findall('<td>[^<]*<span>注册资本:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
-            print com_capital
-
-            com_address = \
-            re.findall('<td>[^<]*<span>注册地址:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
-            print com_address
-
-            legal_person = \
-            re.findall('<td>[^<]*<span>法人代表:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
-            print legal_person
-
-            create_time = \
-            re.findall('<td>[^<]*<span>成立时间:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
-            print create_time
-
-            contact_info = \
-            re.findall('<td>[^<]*<span>官方联系方式:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[
-                0]
-            print contact_info
-
-            brief = re.findall('<p class="de_170822_d01_d02_p[^<]*">([^<]*)</p>', html)[0]
-            print brief
-
-            return [
-                com_name,
-                com_capital,
-                com_address,
-                legal_person,
-                create_time,
-                contact_info,
-                detag(brief),
-                str(datetime.datetime.now()),
-                str(datetime.datetime.now())[:10]
-
-            ]
-            break
-        except Exception, e:
-            print 'error in parse_htmls : ' + str(e)
-            break
-
-
 def get_rongzi(html):
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
     cursor = conn.cursor()
@@ -172,81 +123,57 @@ def get_rongzi(html):
     print '-------'
     print len(tr)
     for i in range(len(tr)):
+        company_id = re.findall("{compId:'(.*?)'},", soup.encode('utf8'))[0]
+        company_url = 'https://www.innotree.cn/inno/company/' + company_id + '.html'
         span_part = re.findall('<span.*?>(.*?)</span>', str(tr[i]))
         round = re.findall('<span><span class="">(.*?)</span></span>', str(tr[i]))
         href = re.findall('a href="(.*?)"', str(tr[i]))[0]
         a_text = re.findall('<a href=".*?">(.*?)</a>', str(tr[i]), re.M)
 
         for x in range(len(a_text)):
+            print company_url
             print detag(company_name)
             print span_part[0]
             print round[0]
             print span_part[2]
             print href
             print detag(a_text[x])
-            cursor.execute('insert into innotree_company_rongziInfo values ("%s","%s","%s","%s","%s","%s","%s","%s")' %
-
-                           (detag(company_name),
-                            span_part[0],
-                            round[0],
-                            span_part[2],
-                            href,
-                            detag(a_text[x]),
-                            str(datetime.datetime.now()),
-                            str(datetime.datetime.now())[:10]
-                            ))
+            cursor.execute(
+                'insert into innotree_company_rongziInfo values ("%s","%s","%s","%s","%s","%s","%s","%s","%s")' %
+                (company_url,
+                 detag(company_name),
+                 span_part[0],
+                 round[0],
+                 span_part[2],
+                 href,
+                 detag(a_text[x]),
+                 str(datetime.datetime.now()),
+                 str(datetime.datetime.now())[:10]
+                 ))
             conn.commit()
 
 
 def main():
-    while True:
-        try:
 
-            conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
-            cursor = conn.cursor()
+    company_urls = get_html_from_db()
+    for html in company_urls:
+        print 'parsing :  ' + html
+        content = get_parse(html)
+        while True:
+            try:
+                get_rongzi(content)
+                break
+            except Exception,e:
+                print str(e)
+                break
 
-            company_urls = get_html_from_db()
-            for html in company_urls:
-                print 'parsing :  ' + html
-                content = get_parse(html)
-                cursor.execute(
-                    'insert into innotree_company_detailInfo values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % tuple(
-                        [html] + parse_htmls(content.encode('utf-8')))
-                )
-                conn.commit()
-            break
-        except Exception, e:
-            print '***********' + str(e)
-            if str(e).find('TypeError: can only concatenate list (not "NoneType") to list'):
-                print '>>>>>>>  TypeError'
-            continue
-
-
+#
 # def main():
-#     while True:
-#         try:
-#             conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
-#             cursor = conn.cursor()
-#
-#             html = 'https://www.innotree.cn/inno/company/14429797997829751781.html'
-#             content = get_parse(html)
-#
-#             cursor.execute(
-#                 'insert into innotree_company_detailInfo values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % tuple(
-#                     [html] + parse_htmls(content.encode('utf-8')))
-#             )
-#
-#             conn.commit()
-#             break
-#         except Exception, e:
-#             print '***********' + str(e)
-#             if str(e).find('TypeError: can only concatenate list (not "NoneType") to list'):
-#                 print '>>>>>>>  TypeError'
-#             continue
+#     html = ' https://www.innotree.cn/inno/company/10370826251356466271.html'
+#     content = get_parse(html)
+#     # print content
+#     get_rongzi(content)
 
 
 if __name__ == '__main__':
     main()
-
-
-    # TypeError: can only concatenate list (not "NoneType") to list
