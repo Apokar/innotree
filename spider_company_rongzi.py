@@ -157,15 +157,16 @@ def main():
 
     company_urls = get_html_from_db()
     for html in company_urls:
-        print 'parsing :  ' + html
-        content = get_parse(html)
         while True:
             try:
+                print 'parsing :  ' + html
+                content = get_parse(html)
                 get_rongzi(content)
                 break
             except Exception,e:
                 print str(e)
-                break
+                continue
+
 
 #
 # def main():

@@ -201,7 +201,6 @@ def get_rongzi(html):
 def main():
     while True:
         try:
-
             conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
             cursor = conn.cursor()
 

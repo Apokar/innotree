@@ -5,6 +5,7 @@
 # 爬取 机构
 
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf8')
 import requests
@@ -25,7 +26,6 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 # 禁用安全请求警告
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
 
 head = {
     'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -65,9 +65,9 @@ def get_proxy():
 def get_parse(html):
     while True:
         try:
-            # proxies = get_proxy()
-            # req = requests.get(html, headers=head, proxies=proxies, timeout=10, verify=False)
-            req = requests.get(html, headers=head, verify=False)
+            proxies = get_proxy()
+            req = requests.get(html, headers=head, proxies=proxies, timeout=10, verify=False)
+            # req = requests.get(html, headers=head, verify=False)
 
             if req.text.__contains__('{"code":1,"msg":"error"}'):
                 print 'error with code:1'
@@ -92,7 +92,7 @@ def get_html_from_db():
     real_urls = []
     cursor.execute('select url from innotree_insts_detailInfo')
     old = cursor.fetchall()
-    for y in range(0,len(old)):
+    for y in range(0, len(old)):
         old_urls.append(old[y][0])
 
     cursor.execute('select insts_url from innotree_insts_baseInfo')
@@ -108,83 +108,80 @@ def get_html_from_db():
 
 
 def parse_htmls(html):
-
-    print html
-    insts_name = re.findall('<span>机构中文名:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
+    # print html
+    insts_name = re.findall('<span>机构中文名:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>(.*?)</span>', html)[0]
     print insts_name
-    type = re.findall('<span>机构类型:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
+    type = re.findall('<span>机构类型:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>(.*?)</span>', html)[0]
     print type
-    insts_Eng_name = re.findall('<span>机构英文名:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
+    insts_Eng_name = re.findall('<span>机构英文名:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>(.*?)</span>', html)[0]
     print insts_Eng_name
-    insts_address = re.findall('<span>注册地区:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
+    insts_address = re.findall('<span>注册地区:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>(.*?)</span>', html)[0]
     print insts_address
-    create_time = re.findall('<span>成立时间:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
+    create_time = re.findall('<span>成立时间:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>(.*?)</span>', html)[0]
     print create_time
-    backup = re.findall('<span>是否备案:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
+    backup = re.findall('<span>是否备案:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>(.*?)</span>', html)[0]
     print backup
-    organization_form = re.findall('<span>组织形式:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
+    organization_form = re.findall('<span>组织形式:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>(.*?)</span>', html)[0]
     print organization_form
-    management_capital = re.findall('<span>管理资本:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>([^<]*)</span>', html)[0]
+    management_capital = re.findall('<span>管理资本:[^<]*</span>[^<]*</td>[^<]*<td>[^<]*<span>(.*?)</span>', html)[0]
     print management_capital
 
     brief = re.findall('<p class="de_170822_d01_d02_p[^<]*">(.*?)</p>', html, re.S)[0]
     print detag(brief)
-    # return [
-    #     insts_name,
-    #     type,
-    #     insts_address,
-    #     insts_Eng_name,
-    #     create_time,
-    #     backup,
-    #     organization_form,
-    #     management_capital,
-    #     detag(brief),
-    #     str(datetime.datetime.now()),
-    #     str(datetime.datetime.now())[:10]
-    #
-    # ]
+    return [
+        insts_name,
+        type,
+        insts_address,
+        insts_Eng_name,
+        create_time,
+        backup,
+        organization_form,
+        management_capital,
+        detag(brief),
+        str(datetime.datetime.now()),
+        str(datetime.datetime.now())[:10]
 
+    ]
 
-
-# def main():
-#     while True:
-#         try:
-#
-#             conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
-#             cursor = conn.cursor()
-#
-#             insts_urls = get_html_from_db()
-#             for html in insts_urls:
-#                 print 'parsing :  ' + html
-#                 content = get_parse(html)
-#                 cursor.execute(
-#                     'insert into innotree_insts_detailInfo values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % tuple(
-#                         [html] + parse_htmls(content.encode('utf-8')))
-#                 )
-#                 conn.commit()
-#             break
-#         except Exception,e:
-#             if str(e).find('TypeError: can only concatenate list (not "NoneType") to list')>1:
-#                 print 'error in main 1 : ' + str(e)
-#                 continue
-#             else:
-#                 print 'error in main 2 : ' + str(e)
-#                 continue
 
 def main():
     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
     cursor = conn.cursor()
 
-    html = ' https://www.innotree.cn/inno/institution/detail/5532699318082211286.html'
-    content = get_parse(html)
-    # print content
-    parse_htmls(content.encode('utf8'))
+    insts_urls = get_html_from_db()
+    for html in insts_urls:
+        while True:
+            try:
+                print 'parsing :  ' + html
+                content = get_parse(html)
+                cursor.execute(
+                    'insert into innotree_insts_detailInfo values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % tuple(
+                        [html] + parse_htmls(content.encode('utf-8')))
+                )
+                conn.commit()
+                break
+            except Exception, e:
+                if str(e).find('TypeError: can only concatenate list (not "NoneType") to list') > 1:
+                    print 'error in main 1 : ' + str(e)
 
-    # cursor.execute(
-    #     'insert into innotree_insts_detailInfo values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % tuple(
-    #         [html] + parse_htmls(content.encode('utf-8')))
-    # )
-    # conn.commit()
+                else:
+                    print 'error in main 2 : ' + str(e)
+                continue
+
+# def main():
+#     conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
+#     cursor = conn.cursor()
+#
+#     html = ' https://www.innotree.cn/inno/institution/detail/2778198917701482833.html'
+#     content = get_parse(html)
+#     print content
+#     parse_htmls(content.encode('utf8'))
+#
+#     # cursor.execute(
+#     #     'insert into innotree_insts_detailInfo values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % tuple(
+#     #         [html] + parse_htmls(content.encode('utf-8')))
+#     # )
+#     # conn.commit()
 
 
 if __name__ == '__main__':
