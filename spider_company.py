@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # author : HuaiZ
 # first edit : 2017-10-26
-
+# 爬取 公司 列表页及 其他信息
 import requests
 import time
 import re
@@ -17,11 +17,6 @@ import threading
 urllib3.disable_warnings()
 
 
-def re_findall(pattern, html):
-    if re.findall(pattern, html, re.S):
-        return re.findall(pattern, html, re.S)
-    else:
-        return 'N'
 
 
 def get_proxy():
@@ -55,29 +50,36 @@ htmls = []
 def get_parse(html):
     while True:
         try:
-            req = requests.get(html, headers=head, verify=False)
+            proxies = get_proxy()
+            req = requests.get(html, headers=head, proxies=proxies, timeout=10, verify=False)
+
+            # req = requests.get(html, headers=head, verify=False)
 
             if req.text.__contains__('{"code":1,"msg":"error"}'):
                 print 'error with code:1'
                 continue
+            elif req.text.__contains__('403 Forbidden'):
+                print '403 Forbidden'
+                continue
             else:
+                print req.text
                 return req.text
                 break
 
         except Exception, e:
-            print 'line 66 : ' + str(e)
+            print 'error with get_parse : ' + str(e)
             continue
 
 
 # 获取--各个维度的第一页
 def get_first_page_lists():
     first_page_lists = []
-    # area = ['北京市', '天津市', '上海市', '重庆市', '河北省', '山西省', '内蒙古自治区辽宁省', '吉林省', '黑龙江省', '江苏省', '浙江省', '安徽省', '福建省', '江西省',
-    #         '山东省', '河南省', '湖北省', '湖南省', '广东省', '广西壮族自治区海南省', '四川省', '贵州省', '云南省', '西藏自治区陕西省', '甘肃省', '青海省',
-    #         '宁夏回族自治区新疆维吾尔自治']
-    # rounds = ['1-2', '3-4-5-6-7-8', '9-10-11-12-13-14', '15-16-17-18-19', '20-21', '30', '40', '50', '60']
-    area = ['北京市']
-    rounds = ['60']
+    area = ['北京市', '天津市', '上海市', '重庆市', '河北省', '山西省', '内蒙古自治区辽宁省', '吉林省', '黑龙江省', '江苏省', '浙江省', '安徽省', '福建省', '江西省',
+            '山东省', '河南省', '湖北省', '湖南省', '广东省', '广西壮族自治区海南省', '四川省', '贵州省', '云南省', '西藏自治区陕西省', '甘肃省', '青海省',
+            '宁夏回族自治区新疆维吾尔自治']
+    rounds = ['1-2', '3-4-5-6-7-8', '9-10-11-12-13-14', '15-16-17-18-19', '20-21', '30', '40', '50', '60']
+    # area = ['北京市']
+    # rounds = ['60']
 
     for areaName in area:
         for x in rounds:
@@ -142,8 +144,8 @@ def get_html():
     # return htmls
 
 def main(html):
-    # while True:
-    #     try:
+    while True:
+        try:
             conn = MySQLdb.connect(host="localhost", user="root", passwd="root", db="innotree", charset="utf8")
             cursor = conn.cursor()
 
@@ -195,10 +197,10 @@ def main(html):
                         str(datetime.datetime.now())[:10]
                     ))
             conn.commit()
-            # break
-        # except Exception, e:
-        #     print 'error :' + str(e)
-        #     continue
+            break
+        except Exception, e:
+            print 'error with main :' + str(e)
+            continue
 
 
 if __name__ == '__main__':
@@ -257,11 +259,6 @@ if __name__ == '__main__':
         start_no += thread_num
     print 'end'
     # -------多线程-------->
-
-
-
-
-
-    print '**************插入ok***************'
+    print '**************company 插入ok***************'
     # cursor.close()
     # conn.close()

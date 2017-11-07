@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # author : HuaiZ
 # first edit : 2017-10-26
+# 爬取 机构 列表页及 其他信息
 
 import requests
 import time
@@ -56,23 +57,33 @@ def get_parse(html):
         try:
             proxies = get_proxy()
             req = requests.get(html, headers=head, proxies=proxies, timeout=10, verify=False)
+            #
             # req = requests.get(html, headers=head, verify=False)
-            return req.text
-            break
-        except Exception, e:
-            print str(e)
-            continue
 
+            if req.text.__contains__('{"code":1,"msg":"error"}'):
+                print 'error with code:1'
+                continue
+            elif req.text.__contains__('403 Forbidden'):
+                print '403 Forbidden'
+                continue
+            else:
+                print req.text
+                return req.text
+                break
+
+        except Exception, e:
+            print 'error with get_parse : ' + str(e)
+            continue
 
 # 获取--各个维度的第一页
 def get_first_page_lists():
     first_page_lists = []
-    # area = ['北京市', '天津市', '上海市', '重庆市', '河北省', '山西省', '内蒙古自治区辽宁省', '吉林省', '黑龙江省', '江苏省', '浙江省', '安徽省', '福建省', '江西省',
-    #         '山东省', '河南省', '湖北省', '湖南省', '广东省', '广西壮族自治区海南省', '四川省', '贵州省', '云南省', '西藏自治区陕西省', '甘肃省', '青海省',
-    #         '宁夏回族自治区新疆维吾尔自治']
+    area = ['北京市', '天津市', '上海市', '重庆市', '河北省', '山西省', '内蒙古自治区辽宁省', '吉林省', '黑龙江省', '江苏省', '浙江省', '安徽省', '福建省', '江西省',
+            '山东省', '河南省', '湖北省', '湖南省', '广东省', '广西壮族自治区海南省', '四川省', '贵州省', '云南省', '西藏自治区陕西省', '甘肃省', '青海省',
+            '宁夏回族自治区新疆维吾尔自治']
 
 
-    area = ['北京市']
+    # area = ['北京市']
 
     rounds = ['1-2', '3-4-5-6-7-8', '9-10-11-12-13-14', '15-16-17-18-19', '20-21', '30', '40', '50', '60']
 
@@ -86,7 +97,7 @@ def get_first_page_lists():
 
 # 获取--该维度下信息数量 返回页面数
 def get_page_num(html):
-    insti_count = re_findall('"count":(.*?),', html)[0]
+    insti_count = re.findall('"count":(.*?),', html)[0]
     if insti_count != 0:
         if int(insti_count) % 10 == 0:
             count = int(insti_count) / 10
@@ -190,7 +201,7 @@ def main(html):
             conn.commit()
             break
         except Exception, e:
-            print str(e)
+            print 'error with main :' + str(e)
             continue
 
 
@@ -204,50 +215,50 @@ if __name__ == '__main__':
     # conn.close()
     # <-------单线程--------
 
-    # htmls = get_html()
-    # print  len(htmls)
-    # for html in htmls:
-    #     main(html)
+    htmls = get_html()
+    print  len(htmls)
+    for html in htmls:
+        main(html)
     # -------单线程-------->
 
     # <-------多线程--------
-    thread_num = 3
-    start_no = 0
-
-    htmls = get_html()
-    print  'len(htmls):  ' + str(len(htmls))
-    inner_index = -2
-
-    while True:
-        threads = []
-        if start_no <= (len(htmls) - thread_num):
-            for inner_index in range(0, thread_num):
-                print start_no + inner_index
-
-                threads.append(
-
-                    threading.Thread(target=main, args=(htmls[start_no + inner_index],))
-                )
-        else:
-            if (start_no + inner_index) == (len(htmls) - 1):
-                break
-            else:
-                if (len(htmls) - thread_num) < start_no < 2 * abs(len(htmls) - thread_num):
-                    for inner_index in range(0, len(htmls) - start_no):
-                        print inner_index
-                        threads.append(
-                            threading.Thread(target=main, args=(htmls[start_no + inner_index],))
-                        )
-        for t in threads:
-            t.setDaemon(True)
-            t.start()
-        t.join()
-        if (start_no + inner_index) == (len(htmls) - 1):
-            print u'----------循环结束------------'
-            break
-        start_no += thread_num
-    print 'end'
+    # thread_num = 3
+    # start_no = 0
+    #
+    # htmls = get_html()
+    # print  'len(htmls):  ' + str(len(htmls))
+    # inner_index = -2
+    #
+    # while True:
+    #     threads = []
+    #     if start_no <= (len(htmls) - thread_num):
+    #         for inner_index in range(0, thread_num):
+    #             print start_no + inner_index
+    #
+    #             threads.append(
+    #
+    #                 threading.Thread(target=main, args=(htmls[start_no + inner_index],))
+    #             )
+    #     else:
+    #         if (start_no + inner_index) == (len(htmls) - 1):
+    #             break
+    #         else:
+    #             if (len(htmls) - thread_num) < start_no < 2 * abs(len(htmls) - thread_num):
+    #                 for inner_index in range(0, len(htmls) - start_no):
+    #                     print inner_index
+    #                     threads.append(
+    #                         threading.Thread(target=main, args=(htmls[start_no + inner_index],))
+    #                     )
+    #     for t in threads:
+    #         t.setDaemon(True)
+    #         t.start()
+    #     t.join()
+    #     if (start_no + inner_index) == (len(htmls) - 1):
+    #         print u'----------循环结束------------'
+    #         break
+    #     start_no += thread_num
+    # print 'end'
     # -------多线程-------->
-    print '--------------插入ok----------------'
+    print '--------------institution 插入ok----------------'
     # cursor.close()
     # conn.close()
