@@ -213,9 +213,9 @@ def get_info(id):
             content = str(ct.text)
             print content
             title = \
-                reS_findall('<h3 class="mech_170525_nav_h3">(.*?)<span class="mech_170525_nav_h3_s01">', content)[
-                    0]
-            print detag(title)
+                reS_findall('<title>(.*?)</title>', content)[
+                    0].decode('utf8')
+            print detag(title)[:-4]
 
             rounds = reS_findall('<span class="mech_170525_nav_h3_s01">(.*?)</span>', content)[0]
             print detag(rounds).replace('(', '').replace(')', '')
@@ -256,7 +256,7 @@ def get_info(id):
             cursor.execute(
                 'insert into table_innotree_company_baseinfo values ("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s")' % (
                     id
-                    , detag(title)
+                    , detag(title)[:-4]
                     , detag(rounds).replace('(', '').replace(')', '')
                     , detag(province)
                     , website
@@ -271,7 +271,7 @@ def get_info(id):
                     , str(datetime.datetime.now())
                     , str(datetime.datetime.now())[:10]
                 ))
-            conn.commit()
+            # conn.commit()
             print '公司id: ' + id + ' 的基本信息 插入成功 @ ' + str(datetime.datetime.now())
 
             # ###########融资信息#############
@@ -305,7 +305,7 @@ def get_info(id):
                             , str(datetime.datetime.now())
                             , str(datetime.datetime.now())[:10]
                         ))
-                    conn.commit()
+                    # conn.commit()
                 print '公司id: ' + id + ' 的融资信息 插入成功 @ ' + str(datetime.datetime.now())
 
             ############团队信息#############
@@ -337,7 +337,7 @@ def get_info(id):
                             , str(datetime.datetime.now())
                             , str(datetime.datetime.now())[:10]
                         ))
-                    conn.commit()
+                    # conn.commit()
                 print '公司id: ' + id + ' 的团队信息 插入成功 @ ' + str(datetime.datetime.now())
 
             # ############股东信息#############
@@ -366,7 +366,7 @@ def get_info(id):
                             , str(datetime.datetime.now())
                             , str(datetime.datetime.now())[:10]
                         ))
-                    conn.commit()
+                    # conn.commit()
                 print '公司id: ' + id + ' 的团队信息 插入成功 @ ' + str(datetime.datetime.now())
 
             ############产品信息#############
@@ -397,7 +397,7 @@ def get_info(id):
                                 , str(datetime.datetime.now())
                                 , str(datetime.datetime.now())[:10]
                             ))
-                        conn.commit()
+                        # conn.commit()
                         print '公司id: ' + id + ' 的产品信息 插入成功 @ ' + str(datetime.datetime.now())
 
     except:
@@ -425,7 +425,8 @@ if __name__ == '__main__':
             start_no += thread_num
         print '执行完毕  _@_ '+str(datetime.datetime.now()) + 'sleep 24 hours and run again, don\'t kill me '
         time.sleep(86400)
-    # id1 = '16636881613973489832'
-    # id2 = '9172814686291618768'
-    # id3 = '11636707478071503398'  # 没有产品信息的
+    # id1 = '245291808249502742'
+    # proxies = get_proxy()
+    # # id2 = '9172814686291618768'
+    # # id3 = '11636707478071503398'  # 没有产品信息的
     # get_info(id1)
