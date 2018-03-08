@@ -406,23 +406,25 @@ def get_info(id):
 
 
 if __name__ == '__main__':
-    proxies = get_proxy()
-    need_ids = get_id_fromDB()
+    while True:
+        proxies = get_proxy()
+        need_ids = get_id_fromDB()
 
-    start_no = 0
-    end_no = len(need_ids)
-    thread_num = 5
-    while start_no < (end_no - thread_num + 1):
-        threads = []
+        start_no = 0
+        end_no = len(need_ids)
+        thread_num = 5
+        while start_no < (end_no - thread_num + 1):
+            threads = []
 
-        for inner_index in range(0, thread_num):
-            threads.append(threading.Thread(target=get_info, args=(need_ids[start_no + inner_index],)))
-        for t in threads:
-            t.setDaemon(True)
-            t.start()
-        t.join()
-        start_no += thread_num
-    print '执行完毕  _@_ '+str(datetime.datetime.now())
+            for inner_index in range(0, thread_num):
+                threads.append(threading.Thread(target=get_info, args=(need_ids[start_no + inner_index],)))
+            for t in threads:
+                t.setDaemon(True)
+                t.start()
+            t.join()
+            start_no += thread_num
+        print '执行完毕  _@_ '+str(datetime.datetime.now()) + 'sleep 24 hours and run again, don\'t kill me '
+        time.sleep(86400)
     # id1 = '16636881613973489832'
     # id2 = '9172814686291618768'
     # id3 = '11636707478071503398'  # 没有产品信息的
