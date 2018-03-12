@@ -215,6 +215,7 @@ def get_info(id):
             if product_info == []:
                 print '公司id: ' + id + ' 没有产品信息 @ ' + str(datetime.datetime.now())
 
+
                 cursor.execute(
                     'insert into table_innotree_company_production_info values ("%s","%s","%s","%s","%s","%s","%s")' % (
                         id
