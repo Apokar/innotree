@@ -86,7 +86,8 @@ def get_parse(url):
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         'Connection': 'keep-alive',
-        'Cookie': '_user_identify_=d59f3443-fc42-345f-847d-0a767ab7436a; JSESSIONID=aaai9fYGCVoEa-1F535fw; Hm_lvt_37854ae85b75cf05012d4d71db2a355a=1518168153; Hm_lvt_ddf0d99bc06024e29662071b7fc5044f=1518168153; uID=462601; sID=e9b961efc14e8d25351eb519de4c2dfe; Hm_lpvt_37854ae85b75cf05012d4d71db2a355a=1518170437; Hm_lpvt_ddf0d99bc06024e29662071b7fc5044f=1518170437',
+        'Cookie': '_user_identify_=07f6df71-51e7-3128-ae48-dd3bd975a1d6; JSESSIONID=aaaWLtMy77rGH9LgO1xiw; uID=450357; sID=7cd79ab6bb978d5bcbfe8b0f1ce0d1f8; Hm_lvt_37854ae85b75cf05012d4d71db2a355a=1518333559,1520818362; Hm_lpvt_37854ae85b75cf05012d4d71db2a355a=1520818973; Hm_lvt_ddf0d99bc06024e29662071b7fc5044f=1518333559,1520818362; Hm_lpvt_ddf0d99bc06024e29662071b7fc5044f=1520818973',
+        # 'Cookie': '_user_identify_=d59f3443-fc42-345f-847d-0a767ab7436a; JSESSIONID=aaai9fYGCVoEa-1F535fw; Hm_lvt_37854ae85b75cf05012d4d71db2a355a=1518168153; Hm_lvt_ddf0d99bc06024e29662071b7fc5044f=1518168153; uID=462601; sID=e9b961efc14e8d25351eb519de4c2dfe; Hm_lpvt_37854ae85b75cf05012d4d71db2a355a=1518170437; Hm_lpvt_ddf0d99bc06024e29662071b7fc5044f=1518170437',
         'Host': 'www.innotree.cn',
         'Referer': url,
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36',
@@ -198,57 +199,57 @@ def get_info(id):
                                charset="utf8")
         cursor = conn.cursor()
 
-        url = 'https://www.innotree.cn/inno/company/' + id + '.html'
-        ct = get_parse(url)
-
-        if ct:
-            content = str(ct.text)
-            print content
+        # url = 'https://www.innotree.cn/inno/company/' + id + '.html'
+        # ct = get_parse(url)
+        #
+        # if ct:
+        #     content = str(ct.text)
+            # print content
 
             ############产品信息#############
-            product_content = get_product_parse(id)
-            if product_content:
-                p_content = product_content.text
-                data = json.loads(p_content)
-                product_info = data["data"]
-                if product_info == []:
-                    print '没有产品信息'
-                    pass
-                else:
-                    print product_info
-                    print len(product_info)
-                    for x in range(len(product_info)):
-                        print product_info[x]['introduction']
-                        print product_info[x]['logo']
-                        print product_info[x]['sName']
-                        print product_info[x]['score']
+        product_content = get_product_parse(id)
+        if product_content:
+            p_content = product_content.text
+            data = json.loads(p_content)
+            product_info = data["data"]
+            if product_info == []:
+                print '公司id: ' + id + ' 没有产品信息 @ ' + str(datetime.datetime.now())
 
-                        cursor.execute(
-                            'insert into table_innotree_company_production_info values ("%s","%s","%s","%s","%s","%s","%s")' % (
-                                id
-                                , product_info[x]['sName']
-                                , product_info[x]['logo']
-                                , product_info[x]['score']
-                                , product_info[x]['introduction']
-                                , str(datetime.datetime.now())
-                                , str(datetime.datetime.now())[:10]
-                            ))
-                        conn.commit()
-                        print '公司id: ' + id + ' 的产品信息 插入成功 @ ' + str(datetime.datetime.now())
-                    else:
-                        print '公司id: ' + id + ' 没有产品信息 @ ' + str(datetime.datetime.now())
+                cursor.execute(
+                    'insert into table_innotree_company_production_info values ("%s","%s","%s","%s","%s","%s","%s")' % (
+                        id
+                        , 'no_data'
+                        , 'no_data'
+                        , 'no_data'
+                        , 'no_data'
+                        , str(datetime.datetime.now())
+                        , str(datetime.datetime.now())[:10]
+                    ))
+                conn.commit()
 
-                        cursor.execute(
-                            'insert into table_innotree_company_production_info values ("%s","%s","%s","%s","%s","%s","%s")' % (
-                                id
-                                , 'no_data'
-                                , 'no_data'
-                                , 'no_data'
-                                , 'no_data'
-                                , str(datetime.datetime.now())
-                                , str(datetime.datetime.now())[:10]
-                            ))
-                        conn.commit()
+            else:
+                print product_info
+                print len(product_info)
+                for x in range(len(product_info)):
+                    print product_info[x]['introduction']
+                    print product_info[x]['logo']
+                    print product_info[x]['sName']
+                    print product_info[x]['score']
+
+                    cursor.execute(
+                        'insert into table_innotree_company_production_info values ("%s","%s","%s","%s","%s","%s","%s")' % (
+                            id
+                            , product_info[x]['sName']
+                            , product_info[x]['logo']
+                            , product_info[x]['score']
+                            , product_info[x]['introduction']
+                            , str(datetime.datetime.now())
+                            , str(datetime.datetime.now())[:10]
+                        ))
+                    conn.commit()
+                    print '公司id: ' + id + ' 的产品信息 插入成功 @ ' + str(datetime.datetime.now())
+
+
     except:
         print traceback.format_exc()
 
