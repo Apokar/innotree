@@ -149,7 +149,7 @@ def detag(html):
     detag = detag.replace('{', '')
     detag = detag.replace('}', '')
     detag = detag.replace('&nbsp;', '')
-    detag = detag.replace(' ', '')
+    detag = detag.replace('"', '')
     detag = detag.replace('\n', '')
     detag = detag.replace('\t', '')
     return detag
